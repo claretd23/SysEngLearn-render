@@ -10,7 +10,13 @@ require('dotenv').config(); // Cargar variables de entorno
 const app = express();
 
 // Middlewares
-app.use(cors()); // Permitir peticiones desde otros orígenes
+app.use(cors({
+  origin: [
+    "http://localhost:5173",           // Frontend local (Vite)
+    "https://tu-frontend.vercel.app"   // Frontend en producción (Vercel)
+  ],
+  credentials: true
+}));
 app.use(bodyParser.json()); // Parsear JSON en las solicitudes
 
 // Conectar a la base de datos
