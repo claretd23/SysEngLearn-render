@@ -12,11 +12,13 @@ const app = express();
 // Middlewares
 app.use(cors({
   origin: [
-    "http://localhost:5173",           // Frontend local (Vite)
-    "https://tu-frontend.vercel.app"   // Frontend en producción (Vercel)
+    "http://localhost:5173",                   // Frontend local (Vite)
+    "https://sys-eng-learn1-wg8e.vercel.app"  // Frontend en producción (Vercel)
   ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
 app.use(bodyParser.json()); // Parsear JSON en las solicitudes
 
 // Conectar a la base de datos
