@@ -1,3 +1,4 @@
+// routes/users.js
 import express from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
@@ -33,21 +34,12 @@ function verifySuperadmin(req, res, next) {
 // REGISTRO DE USUARIO
 router.post('/register', async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: 'Ya existe un usuario con ese correo' });
-    }
+    if (existing) return res.status(400).json({ message: 'Ya existe un usuario con ese correo' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      email,
-      password: hashedPassword,
-      role: 'user',
-    });
-
+    const newUser = new User({ email, password: hashedPassword, role: 'user' });
     await newUser.save();
     res.status(201).json({ message: 'Usuario registrado exitosamente' });
   } catch (error) {
@@ -59,7 +51,6 @@ router.post('/register', async (req, res) => {
 // CREAR USUARIO (solo superadmin)
 router.post('/admin/create', verifySuperadmin, async (req, res) => {
   const { email, password, role = 'user', name, level } = req.body;
-
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Usuario ya existe' });
@@ -69,7 +60,6 @@ router.post('/admin/create', verifySuperadmin, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({
       email,
       password: hashedPassword,
@@ -79,7 +69,6 @@ router.post('/admin/create', verifySuperadmin, async (req, res) => {
     });
 
     await newUser.save();
-
     res.status(201).json({
       message: 'Usuario creado exitosamente',
       user: { name, email, role, level: role === 'user' ? level : null },
@@ -93,13 +82,9 @@ router.post('/admin/create', verifySuperadmin, async (req, res) => {
 // SOLICITAR RECUPERACIÓN DE CONTRASEÑA
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
-
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      // Evita revelar si el correo existe o no
-      return res.status(200).json({ message: 'Si el correo está registrado, recibirás un enlace.' });
-    }
+    if (!user) return res.status(200).json({ message: 'Si el correo está registrado, recibirás un enlace.' });
 
     const token = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = token;
@@ -108,7 +93,6 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetLink = `https://sysenglearn.vercel.app/reset-password?token=${token}`;
 
-    // Enviar correo con Resend
     await resend.emails.send({
       from: 'Doably Academy <no-reply@sysenglearn.com>',
       to: email,
@@ -137,22 +121,17 @@ router.post('/forgot-password', async (req, res) => {
 // RESTABLECER CONTRASEÑA
 router.post('/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
-
   try {
     const user = await User.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
     });
-
-    if (!user) {
-      return res.status(400).json({ message: 'Token inválido o expirado' });
-    }
+    if (!user) return res.status(400).json({ message: 'Token inválido o expirado' });
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-
     await user.save();
     res.json({ message: 'Contraseña actualizada correctamente' });
   } catch (error) {
@@ -164,7 +143,6 @@ router.post('/reset-password', async (req, res) => {
 // LOGIN
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ message: 'Usuario no encontrado' });
@@ -172,17 +150,11 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Contraseña incorrecta' });
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.json({
-      message: 'Login exitoso',
-      user: { email: user.email, role: user.role, level: user.level || null },
-      token,
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
     });
+
+    res.json({ message: 'Login exitoso', user: { email: user.email, role: user.role, level: user.level || null }, token });
   } catch (error) {
     console.error('Error en login:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
@@ -196,9 +168,7 @@ router.delete('/:id', verifySuperadmin, async (req, res) => {
     const user = await User.findById(id);
 
     if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
-    if (user.role === 'superadmin') {
-      return res.status(403).json({ message: 'No puedes eliminar al administrador principal' });
-    }
+    if (user.role === 'superadmin') return res.status(403).json({ message: 'No puedes eliminar al administrador principal' });
 
     await User.findByIdAndDelete(id);
     res.json({ message: 'Usuario eliminado correctamente' });
@@ -219,4 +189,5 @@ router.get('/', verifySuperadmin, async (req, res) => {
   }
 });
 
-module.exports = router;
+// ✅ Exportar router como ESM
+export default router;

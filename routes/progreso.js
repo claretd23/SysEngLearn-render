@@ -1,7 +1,9 @@
-const express = require("express");
+// routes/progreso.js
+import express from "express";
+import Progreso from "../models/progreso.js";
+import { authMiddleware } from "../auth.js";
+
 const router = express.Router();
-const Progreso = require("../models/progreso");
-const { authMiddleware } = require("../auth");
 
 // Guardar ejercicio completado
 router.post("/", authMiddleware, async (req, res) => {
@@ -36,6 +38,5 @@ router.get("/:nivel", authMiddleware, async (req, res) => {
   }
 });
 
-
-
-module.exports = router;
+// ✅ Exportar router como ESM
+export default router;
