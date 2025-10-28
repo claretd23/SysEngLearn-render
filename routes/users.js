@@ -219,4 +219,4 @@ router.get('/', verifySuperadmin, async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
