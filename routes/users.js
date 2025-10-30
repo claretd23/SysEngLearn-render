@@ -94,7 +94,7 @@ router.post('/forgot-password', async (req, res) => {
     const resetLink = `https://sysenglearn.vercel.app/reset-password?token=${token}`;
 
     await resend.emails.send({
-      from: 'Doably Academy <no-reply@sysenglearn.com>',
+      from:'Doably Academy <onboarding@resend.dev>',
       to: email,
       subject: 'Recuperación de contraseña - DOABLY ACADEMY',
       html: `
